@@ -1,0 +1,31 @@
+name: Validate PRs Fullstack app
+
+on:
+  pull_request:
+    branches:
+      - devel
+      - stage
+      - prod
+jobs:
+  check-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PRs
+        run: |
+          if [[ "${{ github.base_ref }}" == "devel" ]]; then
+            if [[ ! "${{ github.head_ref }}" =~ ^(feature|bugfix) ]]; then
+              echo "Only allow merges into the devel branch from branches feature/bugfix."
+              exit 1
+            fi
+          elif [[ "${{ github.base_ref }}" == "stage" ]]; then
+            if [[ "${{ github.head_ref }}" != "devel" ]]; then
+              echo "Only allow merges into the stage branch from the devel branch."
+              exit 1
+            fi
+          elif [[ "${{ github.base_ref }}" == "prod" ]]; then
+            if [[ "${{ github.head_ref }}" != "stage" ]]; then
+              echo "Only allow merges into the prod branch from the stage branch."
+              exit 1
+            fi
+          fi
+

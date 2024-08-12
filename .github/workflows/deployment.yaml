@@ -4,11 +4,6 @@
 name: Deploy Fullstack app
 
 on:
-  pull_request:
-    branches:
-      - devel
-      - stage
-      - prod
   push:
     branches:
       - devel
@@ -16,31 +11,9 @@ on:
       - prod
 
 jobs:
-  check-merge:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Validate PRs
-        run: |
-          if [[ "${{ github.base_ref }}" == "devel" ]]; then
-            if [[ ! "${{ github.head_ref }}" =~ ^(feature|bugfix) ]]; then
-              echo "Only allow merges into the devel branch from branches feature/bugfix."
-              exit 1
-            fi
-          elif [[ "${{ github.base_ref }}" == "stage" ]]; then
-            if [[ "${{ github.head_ref }}" != "devel" ]]; then
-              echo "Only allow merges into the stage branch from the devel branch."
-              exit 1
-            fi
-          elif [[ "${{ github.base_ref }}" == "prod" ]]; then
-            if [[ "${{ github.head_ref }}" != "stage" ]]; then
-              echo "Only allow merges into the prod branch from the stage branch."
-              exit 1
-            fi
-          fi
-
   build:
-    needs: check-merge
     runs-on: ubuntu-latest
+    if: github.base_ref == 'devel' || github.base_ref == 'stage' || github.base_ref == 'prod'
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js
@@ -64,7 +37,6 @@ jobs:
         run: npm run build
 
       - uses: actions/upload-artifact@v4
-        if: github.base_ref == 'devel' || github.base_ref == 'stage' || github.base_ref == 'prod'
         with:
           name: nodejs-build
           path: build
@@ -72,6 +44,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    if: github.base_ref == 'devel' || github.base_ref == 'stage' || github.base_ref == 'prod'
     defaults:
       run:
         working-directory: ./terraform
@@ -83,11 +56,7 @@ jobs:
       - name: Set ENVIRONMENT
         run: |
           if [[ ! "${{ github.head_ref }}" =~ ^(devel|stage|prod) ]]; then
-            if [[ "${{ github.head_ref }}" =~ ^(feature|bugfix) ]]; then
-              echo "TF_ENV=$(echo 'devel' )" >> $GITHUB_ENV
-            else
               echo "TF_ENV=$(echo ${{ github.head_ref }} )" >> $GITHUB_ENV
-            fi
           else
             echo "Only allow deployments from devel| stage | prod "
             exit 0
@@ -134,6 +103,5 @@ jobs:
           terraform plan -no-color -var env_tf="${{ env.TF_ENV }}"
 
       - name: Terraform Apply
-        if: github.base_ref == 'devel' || github.base_ref == 'stage' || github.base_ref == 'prod'
         run: |
           terraform apply -no-color -var env_tf="${{ env.TF_ENV }}" -auto-approve
