@@ -1,3 +1,3 @@
 variable "env_tf" {
-  default = "devel" 
+  default = "devel"
 }
