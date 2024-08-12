@@ -64,7 +64,7 @@ jobs:
         run: npm run build
 
       - uses: actions/upload-artifact@v4
-        if: github.event.pull_request.base.ref == 'devel' || github.event.pull_request.base.ref == 'stage' || github.event.pull_request.base.ref == 'prod'
+        if: github.base_ref == 'devel' || github.base_ref == 'stage' || github.base_ref == 'prod'
         with:
           name: nodejs-build
           path: build
@@ -134,6 +134,6 @@ jobs:
           terraform plan -no-color -var env_tf="${{ env.TF_ENV }}"
 
       - name: Terraform Apply
-        if: github.event.pull_request.base.ref == 'devel' || github.event.pull_request.base.ref == 'stage' || github.event.pull_request.base.ref == 'prod'
+        if: github.base_ref == 'devel' || github.base_ref == 'stage' || github.base_ref == 'prod'
         run: |
           terraform apply -no-color -var env_tf="${{ env.TF_ENV }}" -auto-approve

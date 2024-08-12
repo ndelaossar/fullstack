@@ -27,6 +27,9 @@ resource "aws_s3_bucket_website_configuration" "fullstack-website" {
   error_document {
     key = "index.html"
   }
+  lifecycle {
+   prevent_destroy = true
+ }
 }
 
 resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
