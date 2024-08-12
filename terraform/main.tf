@@ -28,9 +28,9 @@ resource "aws_s3_bucket_website_configuration" "fullstack" {
 }
 
 resource "aws_s3_bucket_object" "object" {
-  for_each = fileset("./build/", "*")
+  for_each = fileset("./nodejs-build/", "*")
   bucket   = aws_s3_bucket.fullstack.id
   key      = each.value
-  source   = "./build/${each.value}"
-  etag     = filemd5("./build/${each.value}")
+  source   = "./nodejs-build/${each.value}"
+  etag     = filemd5("./nodejs-build/${each.value}")
 }
