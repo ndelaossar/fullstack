@@ -19,7 +19,7 @@ resource "aws_s3_bucket_versioning" "versioning_fullstack" {
   }
 }
 
-resource "aws_s3_bucket_website_configuration" "fullstack" {
+resource "aws_s3_bucket_website_configuration" "fullstack-website" {
   bucket = aws_s3_bucket.fullstack.id
   index_document {
     suffix = "index.html"
@@ -29,18 +29,6 @@ resource "aws_s3_bucket_website_configuration" "fullstack" {
   }
 }
 
-resource "aws_s3_bucket_cors_configuration" "s3_bucklet_cors" {
-  bucket = aws_s3_bucket.fullstack.id
-  cors_rule {
-    allowed_headers = ["*"]
-    allowed_methods = ["GET", "HEAD"]
-    allowed_origins = ["*"]
-    expose_headers  = ["ETag"]
-    max_age_seconds = 3000
-  }
-}
-
-
 resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
   bucket = aws_s3_bucket.fullstack.id
   policy = data.aws_iam_policy_document.allow_web_access.json
@@ -48,8 +36,9 @@ resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
 
 data "aws_iam_policy_document" "allow_web_access" {
   statement {
+    sid = "PublicReadGetObject"
     principals {
-      type        = "AWS"
+      type        = "*"
       identifiers = ["*"]
     }
     actions = [
