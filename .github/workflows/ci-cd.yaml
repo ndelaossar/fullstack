@@ -112,7 +112,7 @@ jobs:
 
       - name: Terraform create workspace for devel
         run: |
-          terraform workspace select "${{ env.TF_ENV }}" -or-create
+          terraform workspace select "${{ env.TF_ENV }}" -or-create=true
 
       - name: Terraform Validate
         id: validate
