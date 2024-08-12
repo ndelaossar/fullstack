@@ -76,8 +76,8 @@ jobs:
 
       - name: Set ENVIRONMENT
         run: |
-          if [[ ! "${{ env.TF_ENV }}" =~ ^(devel|stage|prod) ]]; then
-            if [[ "${{ env.TF_ENV }}" =~ ^(feature|bugfix) ]]; then
+          if [[ ! "${{ github.head_ref }}" =~ ^(devel|stage|prod) ]]; then
+            if [[ "${{ github.head_ref }}" =~ ^(feature|bugfix) ]]; then
               echo "TF_ENV=$(echo 'devel' )" >> $GITHUB_ENV
             else
               echo "TF_ENV=$(echo ${{ github.head_ref }} )" >> $GITHUB_ENV
