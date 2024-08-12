@@ -53,8 +53,8 @@ jobs:
 
       - name: Set ENVIRONMENT
         run: |
-          if [[ ! "${{ github.head_ref }}" =~ ^(devel|stage|prod) ]]; then
-              echo "TF_ENV=$(echo ${{ github.head_ref }} )" >> $GITHUB_ENV
+          if [[ ! "${{ github.base_ref }}" =~ ^(devel|stage|prod) ]]; then
+              echo "TF_ENV=$(echo ${{ github.base_ref }} )" >> $GITHUB_ENV
           else
             echo "Only allow deployments from devel| stage | prod "
             exit 0
