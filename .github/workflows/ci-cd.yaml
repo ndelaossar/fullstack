@@ -112,16 +112,7 @@ jobs:
 
       - name: Terraform create workspace for devel
         run: |
-          terraform workspace select "${{ env.TF_ENV }}"
-          exit_code=$?
-          if [ $exit_code -ne 0 ];then
-            terraform workspace new "${{ env.TF_ENV }}"
-            exit_code=$?
-            if [ $exit_code -ne 0 ];then
-              echo "Error creating the workspace"
-              exit $exit_code
-            fi
-          fi
+          terraform workspace select "${{ env.TF_ENV }}" -or-create
 
       - name: Terraform Validate
         id: validate
@@ -131,6 +122,12 @@ jobs:
         id: plan
         run: |
           terraform plan -no-color -var env_tf="${{ env.TF_ENV }}"
+
+      - name: Wait for approval
+        uses: trstringer/manual-approval@v1
+        with:
+          approvers: ndelaossar
+          minimum-approvals: 1
 
       - name: Terraform Apply
         run: |
