@@ -90,7 +90,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: nodejs-build
-          path: terraform/
+          path: terraform/nodejs-build/
 
       - name: Display structure of downloaded files
         run: ls -R
