@@ -67,14 +67,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-        # Checkout the repository to the GitHub Actions runner
+      # Checkout the repository to the GitHub Actions runner
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -86,6 +79,13 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: nodejs-build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
       # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
       - name: Setup Terraform
@@ -101,18 +101,23 @@ jobs:
 
       - name: Terraform create workspace for devel
         run: |
-          if [[ ! "${{ env.TF_ENV }}" =~ ^(devel|stage|prod|feature) ]]; then
+          if [[ ! "${{ env.TF_ENV }}" =~ ^(devel|stage|prod) ]]; then
+            if [[ "${{ env.TF_ENV }}" =~ ^(feature) ]]; then
+              terraform workspace new devel
+              terraform workspace select devel
+            else
               terraform workspace new "${{ env.TF_ENV }}" 
               terraform workspace select "${{ env.TF_ENV }}"
+            fi
           else
             echo "Only allow deployments from devel| stage | prod "
             exit 0
           fi
 
-      # Generates an execution plan for Terraform
-      - name: Terraform Plan
-        run: terraform plan -input=false -var env_tf="${{ env.TF_ENV }}"
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
 
-      # - name: Terraform Apply
-      #   if: github.ref == 'refs/heads/"devel"' && github.event_name == 'push'
-      #   run: terraform apply -auto-approve -input=false
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -var env_tf="${{ env.TF_ENV }}"
