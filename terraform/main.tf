@@ -33,5 +33,5 @@ resource "aws_s3_bucket_object" "object" {
   key      = each.value
   source   = "nodejs-build/${each.value}"
 
-  depends_on = [ aws_s3_bucket.fullstack ]
+  depends_on = [aws_s3_bucket.fullstack]
 }
