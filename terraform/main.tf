@@ -1,11 +1,12 @@
 resource "aws_s3_bucket" "fullstack" {
   bucket = "fullstack-challenge-${var.env_tf}"
+  force_destroy = true
 }
 
-resource "aws_s3_bucket_acl" "fullstack-acl" {
-  bucket = aws_s3_bucket.fullstack.id
-  acl    = "private"
-}
+# resource "aws_s3_bucket_acl" "fullstack-acl" {
+#   bucket = aws_s3_bucket.fullstack.id
+#   acl    = "private"
+# }
 
 resource "aws_s3_bucket_versioning" "versioning_fullstack" {
   bucket = aws_s3_bucket.fullstack.id
