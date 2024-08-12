@@ -6,54 +6,107 @@ name: Deploy Fullstack app
 on:
   pull_request:
     branches:
-    - devel
-    - stage
-    - prod
+      - devel
+      - stage
+      - prod
 
 jobs:
   check-merge:
     runs-on: ubuntu-latest
     steps:
-    - name: Validate PRs
-      run: |
-        if [[ "${{ github.base_ref }}" == "devel" ]]; then
-          if [[ ! "${{ github.head_ref }}" =~ ^(feature|bugfix) ]]; then
-            echo "Only allow merges into the devel branch from branches feature/bugfix."
-            exit 1
+      - name: Validate PRs
+        run: |
+          if [[ "${{ github.base_ref }}" == "devel" ]]; then
+            if [[ ! "${{ github.head_ref }}" =~ ^(feature|bugfix) ]]; then
+              echo "Only allow merges into the devel branch from branches feature/bugfix."
+              exit 1
+            fi
+          elif [[ "${{ github.base_ref }}" == "stage" ]]; then
+            if [[ "${{ github.head_ref }}" != "devel" ]]; then
+              echo "Only allow merges into the stage branch from the devel branch."
+              exit 1
+            fi
+          elif [[ "${{ github.base_ref }}" == "prod" ]]; then
+            if [[ "${{ github.head_ref }}" != "stage" ]]; then
+              echo "Only allow merges into the prod branch from the stage branch."
+              exit 1
+            fi
           fi
-        elif [[ "${{ github.base_ref }}" == "stage" ]]; then
-          if [[ "${{ github.head_ref }}" != "devel" ]]; then
-            echo "Only allow merges into the stage branch from the devel branch."
-            exit 1
-          fi
-        elif [[ "${{ github.base_ref }}" == "prod" ]]; then
-          if [[ "${{ github.head_ref }}" != "stage" ]]; then
-            echo "Only allow merges into the prod branch from the stage branch."
-            exit 1
-          fi
-        fi
 
   build:
     needs: check-merge
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '15.x'
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "15.x"
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Linter (ESLint)
-      run: npm run lint
+      - name: Linter (ESLint)
+        run: npm run lint
 
-    - name: Formatter (Prettier)
-      run: npm run lint
+      - name: Formatter (Prettier)
+        run: npm run lint
 
-    - name: Test (Jest)
-      run: CI=true npm run test
+      - name: Test (Jest)
+        run: CI=true npm run test
 
-    - name: Build npm run build
-      run: npm run build
+      - name: Build npm run build
+        run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nodejs-build
+          path: build
+
+  deploy:
+    needs: check-merge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cd terraform
+
+      - name: Set ENVIRONMENT
+        run: echo "TF_ENV=$(echo ${{ github.ref }} )" >> $GITHUB_ENV
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: nodejs-build
+
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Terraform Init
+        # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+        run: terraform init
+
+      # Checks that all Terraform configuration files adhere to a canonical format
+      - name: Terraform Format
+        run: terraform fmt -check
+
+      - name: Terraform create workspace for devel
+        run: |
+          if [[ "${{ env.TF_ENV }}" =~ ^(devel|stage|prod) ]]; then
+              terraform workspace new "${{ env.TF_ENV }}" 
+              terraform workspace select "${{ env.TF_ENV }}"
+          else
+            echo "Only allow deployments from devel| stage | prod "
+            exit 0
+          fi
+
+      # Generates an execution plan for Terraform
+      - name: Terraform Plan
+        run: terraform plan -input=false -var env_tf="${{ env.TF_ENV }}"
+
+      # - name: Terraform Apply
+      #   if: github.ref == 'refs/heads/"devel"' && github.event_name == 'push'
+      #   run: terraform apply -auto-approve -input=false
