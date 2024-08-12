@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "fullstack" {
-  bucket = "fullstack-challenge-${var.env_tf}"
+  bucket        = "fullstack-challenge-${var.env_tf}"
   force_destroy = true
 }
 
