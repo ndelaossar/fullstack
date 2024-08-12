@@ -28,9 +28,8 @@ resource "aws_s3_bucket_website_configuration" "fullstack" {
 }
 
 resource "aws_s3_bucket_object" "object" {
-  for_each = fileset("./nodejs-build/", "*")
-  bucket   = aws_s3_bucket.fullstack.id
+  for_each = fileset("nodejs-build/", "**/*.*")
+  bucket   = "s3://fullstack-challenge-${var.env_tf}"
   key      = each.value
-  source   = "./nodejs-build/${each.value}"
-  etag     = filemd5("./nodejs-build/${each.value}")
+  source   = "nodejs-build/${each.value}"
 }
