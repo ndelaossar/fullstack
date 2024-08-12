@@ -43,7 +43,7 @@ resource "aws_s3_bucket_cors_configuration" "s3_bucklet_cors" {
 
 resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
   bucket = aws_s3_bucket.fullstack.id
-  policy = data.aws_iam_policy_document.allow_access_from_another_account.json
+  policy = data.aws_iam_policy_document.allow_web_access.json
 }
 
 data "aws_iam_policy_document" "allow_web_access" {
