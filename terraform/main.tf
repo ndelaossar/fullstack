@@ -29,7 +29,9 @@ resource "aws_s3_bucket_website_configuration" "fullstack" {
 
 resource "aws_s3_bucket_object" "object" {
   for_each = fileset("nodejs-build/", "**/*.*")
-  bucket   = "s3://fullstack-challenge-${var.env_tf}"
+  bucket   = aws_s3_bucket.fullstack.id
   key      = each.value
   source   = "nodejs-build/${each.value}"
+
+  depends_on = [ aws_s3_bucket.fullstack ]
 }
