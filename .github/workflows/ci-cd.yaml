@@ -123,13 +123,6 @@ jobs:
         run: |
           terraform plan -no-color -var env_tf="${{ env.TF_ENV }}"
 
-      - name: Wait for approval
-        uses: trstringer/manual-approval@v1
-        with:
-          secret: ${{ github.TOKEN }}
-          approvers: ndelaossar
-          minimum-approvals: 1
-
       - name: Terraform Apply
         run: |
           terraform apply -no-color -var env_tf="${{ env.TF_ENV }}" -auto-approve
