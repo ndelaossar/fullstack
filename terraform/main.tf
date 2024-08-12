@@ -21,15 +21,23 @@ resource "aws_s3_bucket_versioning" "versioning_fullstack" {
 
 resource "aws_s3_bucket_website_configuration" "fullstack" {
   bucket = aws_s3_bucket.fullstack.id
-
   index_document {
     suffix = "index.html"
   }
-
   error_document {
     key = "index.html"
   }
+}
 
+resource "aws_s3_bucket_cors_configuration" "s3_bucklet_cors" {
+  bucket = aws_s3_bucket.fullstack.id
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "HEAD"]
+    allowed_origins = ["*"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3000
+  }
 }
 
 
@@ -44,17 +52,16 @@ data "aws_iam_policy_document" "allow_web_access" {
       type        = "AWS"
       identifiers = ["*"]
     }
-
     actions = [
       "s3:GetObject",
     ]
-
     resources = [
       "${aws_s3_bucket.fullstack.arn}/*",
     ]
   }
 }
 
+# Sync files
 resource "aws_s3_bucket_object" "object" {
   for_each = fileset("nodejs-build/", "**/*.*")
   bucket   = aws_s3_bucket.fullstack.id
