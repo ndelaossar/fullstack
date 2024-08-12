@@ -3,10 +3,14 @@ resource "aws_s3_bucket" "fullstack" {
   force_destroy = true
 }
 
-# resource "aws_s3_bucket_acl" "fullstack-acl" {
-#   bucket = aws_s3_bucket.fullstack.id
-#   acl    = "private"
-# }
+resource "aws_s3_bucket_public_access_block" "fullstack" {
+  bucket = aws_s3_bucket.example.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
 
 resource "aws_s3_bucket_versioning" "versioning_fullstack" {
   bucket = aws_s3_bucket.fullstack.id
@@ -26,6 +30,29 @@ resource "aws_s3_bucket_website_configuration" "fullstack" {
     key = "index.html"
   }
 
+}
+
+
+resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
+  bucket = aws_s3_bucket.fullstack.id
+  policy = data.aws_iam_policy_document.allow_access_from_another_account.json
+}
+
+data "aws_iam_policy_document" "allow_web_access" {
+  statement {
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    actions = [
+      "s3:GetObject",
+    ]
+
+    resources = [
+      "${aws_s3_bucket.fullstack.arn}/*",
+    ]
+  }
 }
 
 resource "aws_s3_bucket_object" "object" {
